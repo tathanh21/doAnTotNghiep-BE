@@ -1,5 +1,6 @@
 import db from "../models/index";
 import user from "../models/user";
+import _  from "lodash"
 let getTopDoctorHome = (limitInput) => {
   return new Promise(async (resolve, reject) => {
     try {
@@ -53,25 +54,40 @@ let getAllDoctors = () => {
   });
 };
 let saveDetailInfoDoctor = (inputData) => {
-  console.log(inputData);
+  console.log('check asdc',inputData)
   return new Promise(async (resolve, reject) => {
     try {
       if (
         !inputData.doctorId ||
         !inputData.contentHTML ||
-        !inputData.contentMarkdown
+        !inputData.contentMarkdown || !inputData.action
       ) {
         resolve({
           errCode: 1,
           message: "Missing parameter",
         });
       } else {
-        await db.Markdown.create({
+        if (inputData.action === 'CREATE') {
+            await db.Markdown.create({
           contentHTML: inputData.contentHTML,
           contentMarkdown: inputData.contentMarkdown,
           description: inputData.description,
           doctorId: inputData.doctorId,
         });
+        } else if(inputData.action === 'EDIT') {
+          let doctorMarkdown = await db.Markdown.findOne({
+            where: { doctorId: inputData.doctorId },
+            raw:false
+          })
+          if (doctorMarkdown) {
+            doctorMarkdown.contentHTML = inputData.contentHTML;
+            doctorMarkdown.contentMarkdown = inputData.contentMarkdown;
+            doctorMarkdown.description = inputData.description;
+            await doctorMarkdown.save()
+          }
+
+        }
+      
         resolve({
           errCode: 0,
           message: "Save info doctor success",
@@ -121,9 +137,86 @@ let getDetailDoctorById=(inputId)=>{
     }
   })
 }
+let bulkCreateSchedule = (data) => {
+  return new Promise(async(resolve, reject) => {
+    try {
+      if (!data.arrSchedule || !data.doctorId || !data.date) {
+        resolve({
+          errCode: 1,
+          errMessage:'Missing required param!'
+        })
+      } else {
+        let schedule = data.arrSchedule;
+        if (schedule && schedule.length > 0) {
+          schedule = schedule.map(item => {
+            item.maxNumber = 10;
+            return item;
+          })
+        }
+        let existing = await db.Schedule.findAll({
+          where: { doctorId: data.doctorId,date:data.date },
+          attributes: ['timeType', 'date', 'doctorId', 'maxNumber'],
+          raw:true
+        })
+        // if (existing && existing.length > 0) {
+        //   existing = existing.map(item => {
+        //     item.date = new Date(item.date).getTime();
+        //     return item;
+        //   })
+        // }
+        let toCreate = _.differenceWith(schedule, existing, (a, b) => {
+          return a.timeType === b.timeType && +a.date === +b.date;
+        })
+        if (toCreate && toCreate.length > 0) {
+        await db.Schedule.bulkCreate(toCreate)
+        }
+        resolve({
+          errCode: 0,
+          errMessage:'OK'
+        })
+        
+      }
+
+    } catch (error) {
+      reject(error)
+    }
+  })
+}
+let getScheduleByDate = (doctorId, date) => {
+  return new Promise(async(resolve, reject) => {
+    try {
+      if (!doctorId || !date) {
+         resolve({
+          errCode: 1,
+          errMessage:'Missing required param!'
+        })
+      } else {
+        let dataSchedule = await db.Schedule.findAll({
+          where: { doctorId: doctorId, date: date },
+          include: [{
+          model:db.Allcode,as:'timeTypeData',attributes:['valueVi','valueEn']
+          }],
+          raw: false,
+          nest:true
+        });
+       
+        if (!dataSchedule) dataSchedule = [];
+
+         resolve({
+          errCode: 0,
+          data:dataSchedule
+        })
+      }
+    } catch (error) {
+      reject(error)
+    }
+  })
+}
 module.exports = {
   getTopDoctorHome: getTopDoctorHome,
   getAllDoctors: getAllDoctors,
   saveDetailInfoDoctor: saveDetailInfoDoctor,
-  getDetailDoctorById:getDetailDoctorById
+  getDetailDoctorById: getDetailDoctorById,
+  bulkCreateSchedule: bulkCreateSchedule,
+  getScheduleByDate:getScheduleByDate
 };
