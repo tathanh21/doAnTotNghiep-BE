@@ -1,6 +1,6 @@
 import db from "../models/index";
 import user from "../models/user";
-import _  from "lodash"
+import _, { reject }  from "lodash"
 let getTopDoctorHome = (limitInput) => {
   return new Promise(async (resolve, reject) => {
     try {
@@ -54,19 +54,22 @@ let getAllDoctors = () => {
   });
 };
 let saveDetailInfoDoctor = (inputData) => {
-  console.log('check asdc',inputData)
   return new Promise(async (resolve, reject) => {
     try {
       if (
         !inputData.doctorId ||
         !inputData.contentHTML ||
-        !inputData.contentMarkdown || !inputData.action
+        !inputData.contentMarkdown || !inputData.action ||
+        !inputData.selectedPrice || !inputData.selectedPayment ||
+        !inputData.selectedProvince ||
+        !inputData.nameClinic || !inputData.addressClinic || !inputData.note 
       ) {
         resolve({
           errCode: 1,
           message: "Missing parameter",
         });
       } else {
+        //upsert to markdown
         if (inputData.action === 'CREATE') {
             await db.Markdown.create({
           contentHTML: inputData.contentHTML,
@@ -85,9 +88,35 @@ let saveDetailInfoDoctor = (inputData) => {
             doctorMarkdown.description = inputData.description;
             await doctorMarkdown.save()
           }
-
         }
-      
+      //upsert to doctor info
+        let doctorInfo = await db.Doctor_Info.findOne({
+          where: { doctorId: inputData.doctorId },
+          raw:false
+        })
+
+        if (doctorInfo) {
+          //update
+          doctorInfo.doctorId = inputData.doctorId;
+          doctorInfo.priceId = inputData.selectedPrice;
+          doctorInfo.paymentId = inputData.selectedPayment;
+          doctorInfo.provinceId = inputData.selectedProvince;
+          doctorInfo.nameClinic = inputData.nameClinic;
+          doctorInfo.addressClinic = inputData.addressClinic;
+          doctorInfo.note = inputData.note;
+          await doctorInfo.save();
+        } else {
+          //create
+          await db.Doctor_Info.create({
+          doctorId:inputData.doctorId,
+          priceId : inputData.selectedPrice,
+          paymentId : inputData.selectedPayment,
+          provinceId : inputData.selectedProvince,
+          nameClinic : inputData.nameClinic,
+          addressClinic : inputData.addressClinic,
+          note : inputData.note
+          })
+        }
         resolve({
           errCode: 0,
           message: "Save info doctor success",
@@ -117,6 +146,17 @@ let getDetailDoctorById=(inputId)=>{
           include:[
             {model:db.Markdown,
               attributes:['description','contentMarkdown','contentHTML']
+            },
+            {
+              model: db.Doctor_Info,
+              attributes: {
+                exclude:['id','doctorId']
+              },
+              include: [
+                { model: db.Allcode, as: 'priceData', attributes: ['valueEn', 'valueVi'] },
+                { model: db.Allcode, as: 'paymentData', attributes: ['valueEn', 'valueVi'] },
+                { model: db.Allcode, as: 'provinceData', attributes: ['valueEn', 'valueVi'] }
+              ]
             },
             {model:db.Allcode,as:'positionData', attributes:['valueEn','valueVi']}
           ],
@@ -212,11 +252,45 @@ let getScheduleByDate = (doctorId, date) => {
     }
   })
 }
+let getExtraDoctorById = (doctorId) => {
+  return new Promise(async(resolve, reject) => {
+    try {
+      if (!doctorId) {
+         resolve({
+          errCode: 1,
+          errMessage:'Missing required param!'
+        })
+      } else {
+        let data = await db.Doctor_Info.findOne({
+          where: { doctorId: doctorId },
+          attributes: {
+            exclude:['id','doctorId']
+          },
+          include: [
+              { model: db.Allcode, as: 'priceData', attributes: ['valueEn', 'valueVi'] },
+                { model: db.Allcode, as: 'paymentData', attributes: ['valueEn', 'valueVi'] },
+                { model: db.Allcode, as: 'provinceData', attributes: ['valueEn', 'valueVi'] }
+          ],
+          raw: false,
+          nest:true
+        })
+        if (!data) data = {};
+        resolve({
+          errCode: 0,
+          data:data
+        })
+      }
+    } catch (error) {
+      reject(error)
+    }
+  })
+}
 module.exports = {
   getTopDoctorHome: getTopDoctorHome,
   getAllDoctors: getAllDoctors,
   saveDetailInfoDoctor: saveDetailInfoDoctor,
   getDetailDoctorById: getDetailDoctorById,
   bulkCreateSchedule: bulkCreateSchedule,
-  getScheduleByDate:getScheduleByDate
+  getScheduleByDate: getScheduleByDate,
+  getExtraDoctorById:getExtraDoctorById
 };
