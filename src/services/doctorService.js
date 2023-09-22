@@ -53,16 +53,19 @@ let getAllDoctors = () => {
     }
   });
 };
+let checkRe
 let saveDetailInfoDoctor = (inputData) => {
   return new Promise(async (resolve, reject) => {
     try {
+      // console.log('check input',inputData)
       if (
         !inputData.doctorId ||
         !inputData.contentHTML ||
         !inputData.contentMarkdown || !inputData.action ||
         !inputData.selectedPrice || !inputData.selectedPayment ||
         !inputData.selectedProvince ||
-        !inputData.nameClinic || !inputData.addressClinic || !inputData.note 
+        !inputData.nameClinic || !inputData.addressClinic || !inputData.note ||
+        !inputData.specialtyId
       ) {
         resolve({
           errCode: 1,
@@ -104,6 +107,8 @@ let saveDetailInfoDoctor = (inputData) => {
           doctorInfo.nameClinic = inputData.nameClinic;
           doctorInfo.addressClinic = inputData.addressClinic;
           doctorInfo.note = inputData.note;
+          doctorInfo.specialtyId = inputData.specialtyId;
+          doctorInfo.clinicId = inputData.clinicId;
           await doctorInfo.save();
         } else {
           //create
@@ -114,7 +119,9 @@ let saveDetailInfoDoctor = (inputData) => {
           provinceId : inputData.selectedProvince,
           nameClinic : inputData.nameClinic,
           addressClinic : inputData.addressClinic,
-          note : inputData.note
+            note: inputData.note,
+            specialtyId: inputData.specialtyId,
+          clinicId:inputData.clinicId
           })
         }
         resolve({
@@ -233,15 +240,14 @@ let getScheduleByDate = (doctorId, date) => {
       } else {
         let dataSchedule = await db.Schedule.findAll({
           where: { doctorId: doctorId, date: date },
-          include: [{
-          model:db.Allcode,as:'timeTypeData',attributes:['valueVi','valueEn']
-          }],
+          include: [
+            { model: db.Allcode, as: 'timeTypeData', attributes: ['valueVi', 'valueEn'] },
+            { model:db.User,as:'doctorData',attributes:['firstName','lastName']}
+          ],
           raw: false,
           nest:true
         });
-       
         if (!dataSchedule) dataSchedule = [];
-
          resolve({
           errCode: 0,
           data:dataSchedule
@@ -285,6 +291,56 @@ let getExtraDoctorById = (doctorId) => {
     }
   })
 }
+let getProflieDoctorById = (doctorId) => {
+  return new Promise(async(resolve, reject) => {
+    try {
+      if (!doctorId) {
+        resolve({
+          errCode: 1,
+          errMessage: 'Missing required param!'
+        })
+      } else {
+         let data= await  db.User.findOne({
+          where:{
+            id:doctorId
+          },
+          attributes:{
+            exclude:['password']
+          },
+          include:[
+             {model:db.Markdown,
+              attributes:['description','contentMarkdown','contentHTML']
+            },
+            {
+              model: db.Doctor_Info,
+              attributes: {
+                exclude:['id','doctorId']
+              },
+              include: [
+                { model: db.Allcode, as: 'priceData', attributes: ['valueEn', 'valueVi'] },
+                { model: db.Allcode, as: 'paymentData', attributes: ['valueEn', 'valueVi'] },
+                { model: db.Allcode, as: 'provinceData', attributes: ['valueEn', 'valueVi'] }
+              ]
+            },
+            {model:db.Allcode,as:'positionData', attributes:['valueEn','valueVi']}
+          ],
+          raw:false,
+          nest:true
+        })
+        if(data && data.image){
+          data.image = new Buffer(data.image, "base64").toString("binary");
+        }
+        if(!data) data={}
+        resolve({
+          errCode:0,
+          data:data
+        })
+      }
+    } catch (error) {
+      reject(error)
+    }
+  })
+}
 module.exports = {
   getTopDoctorHome: getTopDoctorHome,
   getAllDoctors: getAllDoctors,
@@ -292,5 +348,6 @@ module.exports = {
   getDetailDoctorById: getDetailDoctorById,
   bulkCreateSchedule: bulkCreateSchedule,
   getScheduleByDate: getScheduleByDate,
-  getExtraDoctorById:getExtraDoctorById
+  getExtraDoctorById: getExtraDoctorById,
+  getProflieDoctorById:getProflieDoctorById
 };
