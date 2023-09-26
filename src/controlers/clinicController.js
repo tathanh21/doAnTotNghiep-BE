@@ -10,7 +10,31 @@ let createClinic = async(req, res) => {
     });
   }
 }
-
+let getAllClinic = async (req, res) => {
+   try {
+       let info = await clinicService.getAllClinic();
+       return res.status(200).json(info);
+       } catch (error) {
+    return res.status(200).json({
+      errCode: -1,
+      message: "Error code from server ....",
+    });
+  }
+}
+let getDetailClinicById = async (req, res) => {
+   try {
+       let info = await clinicService.getDetailClinicById(req.query.id);
+       return res.status(200).json(info);
+       } catch (error) {
+    return res.status(200).json({
+      errCode: -1,
+      message: "Error code from server ....",
+    });
+  }
+}
 module.exports = {
-    createClinic:createClinic
+  createClinic: createClinic,
+  getAllClinic: getAllClinic,
+  getDetailClinicById:getDetailClinicById
+  
 }
