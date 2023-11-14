@@ -60,6 +60,7 @@ let checkUserEmail = (userEmail) => {
     }
   });
 };
+
 let getAllUser = (userId) => {
   return new Promise(async (resolve, reject) => {
     try {
@@ -82,6 +83,7 @@ let getAllUser = (userId) => {
     }
   });
 };
+
 let hashUserPassword = (password) => {
   return new Promise(async (resolve, reject) => {
     try {
@@ -103,8 +105,9 @@ let createNewUser = (data) => {
           message: "Email already used!",
         });
       }
-      let hashPasswordFromBcrypt = await hashUserPassword(data.password);
-      db.User.create({
+      else {
+        let hashPasswordFromBcrypt = await hashUserPassword(data.password);
+        db.User.create({
         email: data.email,
         password: hashPasswordFromBcrypt,
         firstName: data.firstName,
@@ -120,6 +123,8 @@ let createNewUser = (data) => {
         errCode: 0,
         message: "OK",
       });
+      }
+      
     } catch (error) {
       reject(error);
     }

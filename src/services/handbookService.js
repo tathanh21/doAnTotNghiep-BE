@@ -1,21 +1,21 @@
 const { reject } = require("lodash");
 const db = require("../models");
 
-let createClinic = (data) => {
+let createHandbook = (data) => {
     return new Promise(async (resolve, reject) => {
+        console.log(data)
         try {
-            if (!data.name || !data.imageBase64 || !data.descriptionHTML || !data.descriptionMarkdown || !data.address) {
+            if (!data.name || !data.image || !data.descriptionHTML || !data.descriptionMarkdown) {
                 resolve({
                     errCode: 1,
                     message: "Missing parameter",
                 });
             } else {
-                await db.Clinic.create({
-                    name: data.name,
-                    image: data.imageBase64,
+                await db.Handbook.create({
+                    name:data.name,
+                    image: data.image,
                     descriptionHTML: data.descriptionHTML,
-                    descriptionMarkdown: data.descriptionMarkdown,
-                    address:data.address
+                    descriptionMarkdown:data.descriptionMarkdown
                 })
                 resolve({
                     errCode: 0,
@@ -27,16 +27,15 @@ let createClinic = (data) => {
         }
     })
 }
-let getAllClinic = () => {
+let getAllHandbook = () => {
     return new Promise(async(resolve, reject) => {
         try {
-            let data = await db.Clinic.findAll();
+            let data = await db.Handbook.findAll();
             if (data && data.length > 0) {
                 data.map(item => {
                     item.image = new Buffer(item.image, 'base64').toString('binary');
                     return item
-                })
-                
+                })     
             }
         resolve({
             errCode: 0,
@@ -48,99 +47,90 @@ let getAllClinic = () => {
         }
     })
 }
-let getDetailClinicById = (inputId) => {
+let getDetailHandbookById = (inputId) => {
     return new Promise(async(resolve, reject) => {
         try {
-             if (!inputId) {
+              if (!inputId) {
                 resolve({
                     errCode: 1,
                     message: "Missing parameter",
                 });
               } else {
-                    let  data = await db.Clinic.findOne({
+                    let  data = await db.Handbook.findOne({
                       where: {
                           id:inputId
-                      },
-                      attributes:['name','address','descriptionHTML','descriptionMarkdown']
-                      })
-                  if (data) {
-                      let doctorClinic = [];
-                          doctorClinic = await db.Doctor_Info.findAll({
-                          where: { clinicId: inputId },
-                          attributes:['doctorId'],
-                          })
-                            data.doctorClinic=doctorClinic 
-                  }
-                  else {
-                      data={}
-                  }
+                        },
+                    //   attributes:['image','name','descriptionHTML','descriptionMarkdown']
+                    })
+                //   console.log(data.image)
+                       data.image=new Buffer(data.image, 'base64').toString('binary');
+
                     resolve({
                         errCode: 0,
                       errMessage: 'ok',
                       data
-                    })
+                    })  
             }
         } catch (error) {
             reject(error)
         }
     })
 }
-
-let deleteHandClinic = (id) => {
+let deleteHandbook = (id) => {
   return new Promise(async (resolve, reject) => {
-    let clinic = await db.Clinic.findOne({
+    let handbook = await db.Handbook.findOne({
       where: { id: id },
     });
-    if (!clinic) {
+    if (!handbook) {
       resolve({
         errCode: 1,
-        message: "clinic not exist",
+        message: "handbook not exist",
       });
     }
 
-    await db.Clinic.destroy({
+    await db.Handbook.destroy({
       where: { id: id },
     });
 
     resolve({
       errCode: 0,
-      message: "Delete clinic success",
+      message: "Delete handbook success",
     });
   });
 };
-let updateClinicData = (data) => {
+let updateHandbookData = (data) => {
   return new Promise(async (resolve, reject) => {
     // console.log('check data update',data.id)
     try {
-      if (!data.id || !data.name || !data.address || !data.descriptionHTML || !data.descriptionMarkdown) {
+      if (!data.id || !data.name || !data.descriptionHTML || !data.descriptionMarkdown) {
         resolve({
           errCode: 2,
           message: "Missing parameter",
         });
       }
-      let clinic = await db.Clinic.findOne({
+      let handbook = await db.Handbook.findOne({
         where: { id: data.id },
         raw: false,
       });
     //  console.log('check',handbook)
 
-      if (clinic) {
-        clinic.name = data.name;
+      if (handbook) {
+        handbook.name = data.name;
         // handbook.image = data.image;
-        clinic.descriptionHTML = data.descriptionHTML;
-        clinic.descriptionMarkdown = data.descriptionMarkdown;
+        handbook.descriptionHTML = data.descriptionHTML;
+        handbook.descriptionMarkdown = data.descriptionMarkdown;
         if (data.image) {
-          clinic.image = data.image;
+          handbook.image = data.image;
         }
-        await clinic.save();
+        await handbook.save();
         resolve({
           errCode: 0,
-          message: "Update clinic success",
+          message: "Update handbook success",
         });
       } else {
         resolve({
           errCode: 1,
-          message: "Clinic not found",
+          message: "handbook not found",
         });
       }
     } catch (error) {
@@ -148,10 +138,11 @@ let updateClinicData = (data) => {
     }
   });
 };
+
 module.exports = {
-    createClinic: createClinic,
-    getAllClinic: getAllClinic,
-    getDetailClinicById: getDetailClinicById,
-    deleteHandClinic,
-    updateClinicData
+    createHandbook: createHandbook,
+    getAllHandbook: getAllHandbook,
+    getDetailHandbookById: getDetailHandbookById,
+    deleteHandbook,
+    updateHandbookData
 }

@@ -96,8 +96,72 @@ let getDetailSpecialtyById = (inputId,location) => {
         }
     })
 }
+let deleteSpecialty = (id) => {
+  return new Promise(async (resolve, reject) => {
+    let specialty = await db.Specialty.findOne({
+      where: { id: id },
+    });
+    if (!specialty) {
+      resolve({
+        errCode: 1,
+        message: "specialty not exist",
+      });
+    }
+
+    await db.Specialty.destroy({
+      where: { id: id },
+    });
+
+    resolve({
+      errCode: 0,
+      message: "Delete specialty success",
+    });
+  });
+};
+let updateSpecialtyData = (data) => {
+  return new Promise(async (resolve, reject) => {
+   
+    try {
+      if (!data.id || !data.name  || !data.descriptionHTML || !data.descriptionMarkdown) {
+        resolve({
+          errCode: 2,
+          message: "Missing parameter",
+        });
+      }
+      let specialty = await db.Specialty.findOne({
+        where: { id: data.id },
+        raw: false,
+      });
+    //  console.log('check',handbook)
+
+      if (specialty) {
+          specialty.name = data.name;
+        // handbook.image = data.image;
+        specialty.descriptionHTML = data.descriptionHTML;
+        specialty.descriptionMarkdown = data.descriptionMarkdown;
+        if (data.image) {
+          specialty.image = data.image;
+        }
+        await specialty.save();
+        resolve({
+          errCode: 0,
+          message: "Update specialty success",
+        });
+      } else {
+        resolve({
+          errCode: 1,
+          message: "specialty not found",
+        });
+      }
+    } catch (error) {
+      reject(error);
+    }
+  });
+};
 module.exports = {
     createSpecialty: createSpecialty,
     getAllSpecialty: getAllSpecialty,
-    getDetailSpecialtyById:getDetailSpecialtyById
+    getDetailSpecialtyById: getDetailSpecialtyById,
+    deleteSpecialty,
+    updateSpecialtyData
 }
