@@ -56,6 +56,8 @@ let initWebRoutes = (app) => {
   router.delete("/api/delete-clinic", clinicController.handleDeleteClinic);
   router.put("/api/edit-clinic", clinicController.handleEditClinic);
 
+  router.post("/api/login-email", userController.loginEmailPatient)
+  
   return app.use("/", router);
 };
 

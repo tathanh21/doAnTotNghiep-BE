@@ -1,3 +1,4 @@
+import { includes } from "lodash";
 import db from "../models/index";
 import bcrypt from "bcryptjs";
 
@@ -215,6 +216,55 @@ let getAllCodeService = (typeInput) => {
     }
   });
 };
+let loginEmailPatientService = (emailPatient) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      if (!emailPatient) {
+         resolve({
+        errCode: 3,
+        errMessage:'Vui lòng nhập email!'
+     })
+      }
+      let patient = await db.User.findOne({
+        where: { email: emailPatient, roleId: 'R3' },
+        include: [
+          {
+            model: db.Booking,
+            as: "patientData",
+            include: [
+              { model: db.Allcode, as: 'timeTypeDataPatient' },
+               {model:db.Allcode,as:'statusDataPatient'}
+            ],
+          
+          }
+        ],
+         raw: true,
+         nest: true,
+      });
+      if (!patient) {
+          resolve({
+        errCode: 1,
+        errMessage:'Không tìm thấy email, Vui lòng kiểm tra lại'
+          })
+        return;
+      }
+
+      // let doctorId= patient.patientData.doctorId
+      // let doctorName = await db.User.findOne({
+      //    where: { doctorId: doctorId }
+      // })
+
+      // console.log('---',doctorName)
+      resolve({
+        errCode: 0,
+        patient: patient,
+        
+     })
+    } catch (error) {
+      reject(error);
+    }
+  });
+};
 module.exports = {
   handleUserLogin: handleUserLogin,
   getAllUser: getAllUser,
@@ -222,4 +272,5 @@ module.exports = {
   deleteUser: deleteUser,
   updateUserData: updateUserData,
   getAllCodeService: getAllCodeService,
+  loginEmailPatientService:loginEmailPatientService
 };

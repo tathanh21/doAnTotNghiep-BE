@@ -12,7 +12,7 @@ let sendSimpleEmail = async(dataSend) => {
     pass: process.env.EMAIL_APP_PASSWORD,
   },
     });
-      const info = await transporter.sendMail({
+    const info = await transporter.sendMail({
     from: '"Tat Thanh 👻" <tatthanhk50pt@gmail.com>', // sender address
     to: dataSend.reciverEmail, // list of receivers
     subject: "Thông tin đặt lịch khám bệnh", // Subject line
@@ -33,9 +33,8 @@ let getBodyHTMLEmail = (dataSend) => {
             <h3>Xin chào ${dataSend.patientName}!</h3>
             <p>Bạn nhận được email này vì đã đặt lịch khám bệnh online trên Booking Care</p>
             <p>Thông tin đặt lịch khám bệnh:</p>
-            <div><b>Thời gian:${dataSend.time}</b></div>
-            <div><b>Bác sĩ::${dataSend.doctorName}</b></div>
-
+            <div><b>Thời gian: ${dataSend.time}</b></div>
+            <div><b>Bác sĩ: ${dataSend.doctorName}</b></div>
             <p>Nếu các thông tin là đúng sự thật vui lòng click đường link bên dưới để xác nhận hoàn tất thủ tục đặt lịch khám bệnh.</p>
             <div>
             <a href=${dataSend.redirectLink} target="_blank">Click here</a>
@@ -67,8 +66,7 @@ let getBodyHTMLEmailRemedy = (dataSend) => {
     result =
           `
             <h3>Xin chào ${dataSend.patientName} !</h3>
-            <p>Bạn nhận được email này vì đã đặt lịch khám bệnh online trên Booking Care thanh cong</p>
-            <p>Thông tin đơn thuốc/ hóa đơn được gửi trong file đính kèm</p>
+            <p>Bạn nhận được email này vì đã đặt lịch khám bệnh online trên Booking Care thành công</p>
             <div>Xin chân thành cảm ơn!</div>
           `
   }
@@ -77,10 +75,7 @@ let getBodyHTMLEmailRemedy = (dataSend) => {
       `
             <h3>Dear  ${dataSend.patientName}!</h3>
             <p>You received this email because you booked an online medical appointment on Booking Care</p>
-            <p>Information for scheduling medical examination:</p>
           
-
-            <p>If the information is true, please click the link below to confirm completion of the medical examination appointment procedure.</p>
             <div>Sincerely thank!</div>
           `
   }
@@ -102,17 +97,18 @@ let sendAttachment = async(dataSend) => {
     to: dataSend.email, // list of receivers
     subject: "Kết quả đặt lịch khám bệnh", // Subject line
     text: "Hello world?", // plain text body
-        html: getBodyHTMLEmailRemedy(dataSend), // html body
-        attachments: [
-          {
-            filename: `Remedy-${dataSend.patientId}=${new Date().getTime()}.png`,
-            content: dataSend.imgBase64.split("base64,")[1],
-            encoding:'base64' 
-        }          
-    ]
+        html: getBodyHTMLEmailRemedy(dataSend) // html body
   });
 }
 module.exports = {
   sendSimpleEmail: sendSimpleEmail,
   sendAttachment:sendAttachment
 }
+
+//  attachments: [
+//           {
+//             filename: `Remedy-${dataSend.patientId}=${new Date().getTime()}.png`,
+//             content: dataSend.imgBase64.split("base64,")[1],
+//             encoding:'base64' 
+//         }          
+//     ]
