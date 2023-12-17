@@ -60,5 +60,4 @@ module.exports = {
   getDetailClinicById: getDetailClinicById,
   handleDeleteClinic,
   handleEditClinic
-  
 }

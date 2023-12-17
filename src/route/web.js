@@ -57,7 +57,12 @@ let initWebRoutes = (app) => {
   router.put("/api/edit-clinic", clinicController.handleEditClinic);
 
   router.post("/api/login-email", userController.loginEmailPatient)
+  router.post("/api/patient-cancel-booking", userController.cancelBookingPatient)
   
+  router.get("/api/get-all-booking", homeController.getAllBooking);
+
+
+
   return app.use("/", router);
 };
 

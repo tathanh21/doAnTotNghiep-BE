@@ -88,6 +88,18 @@ let loginEmailPatient = async (req, res) => {
   }
 };
 
+let cancelBookingPatient = async (req, res) => {
+  try {
+    let data = await userService.patientCancelBooking(req.body);
+    return res.status(200).json(data);
+  } catch (error) {
+    return res.status(200).json({
+      errCode: -1,
+      errMessage: "Error from server",
+    });
+  }
+};
+
 module.exports = {
   handleLogin: handleLogin,
   handleGetAllUsers: handleGetAllUsers,
@@ -95,5 +107,6 @@ module.exports = {
   handleEditUser: handleEditUser,
   handleDeleteUser: handleDeleteUser,
   getAllCode: getAllCode,
-  loginEmailPatient:loginEmailPatient
+  loginEmailPatient: loginEmailPatient,
+  cancelBookingPatient:cancelBookingPatient
 };

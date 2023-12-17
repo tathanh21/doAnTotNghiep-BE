@@ -100,10 +100,28 @@ let deleteUserById = (userId) => {
     }
   });
 };
+
+let getAllBooking = () => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      let bookings = await db.Booking.findAll({
+        raw: true,
+      });
+        resolve({
+                    errCode: 0,
+                    data:bookings
+                })
+    } catch (error) {
+      reject(error);
+    }
+  });
+};
+
 module.exports = {
   createNewUser: createNewUser,
   getAllUser: getAllUser,
   getEditCRUD: getEditCRUD,
   updateUserData: updateUserData,
   deleteUserById: deleteUserById,
+  getAllBooking:getAllBooking,
 };

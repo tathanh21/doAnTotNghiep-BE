@@ -38,6 +38,19 @@ let deleteCRUD = async (req, res) => {
   let allUser = await CRUDService.deleteUserById(id);
   return res.render("displayCrud.ejs", { dataTable: allUser });
 };
+
+let getAllBooking = async (req, res) => {
+     try {
+       let data = await CRUDService.getAllBooking();
+       return res.status(200).json(data);
+       } catch (error) {
+    return res.status(200).json({
+      errCode: -1,
+      message: "Error code from server ....",
+    });
+  }
+}
+
 module.exports = {
   getHomeController: getHomeController,
   getCRUD: getCRUD,
@@ -46,4 +59,5 @@ module.exports = {
   getEditCRUD: getEditCRUD,
   putCRUD: putCRUD,
   deleteCRUD: deleteCRUD,
+  getAllBooking:getAllBooking
 };

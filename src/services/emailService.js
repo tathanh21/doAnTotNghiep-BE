@@ -66,7 +66,7 @@ let getBodyHTMLEmailRemedy = (dataSend) => {
     result =
           `
             <h3>Xin chào ${dataSend.patientName} !</h3>
-            <p>Bạn nhận được email này vì đã đặt lịch khám bệnh online trên Booking Care thành công</p>
+            <p>Kết quả khám bệnh</p>
             <div>Xin chân thành cảm ơn!</div>
           `
   }
@@ -74,9 +74,10 @@ let getBodyHTMLEmailRemedy = (dataSend) => {
      result =
       `
             <h3>Dear  ${dataSend.patientName}!</h3>
-            <p>You received this email because you booked an online medical appointment on Booking Care</p>
+            <p>Result of medical examination appointment</p>
           
             <div>Sincerely thank!</div>
+            
           `
   }
   return result
@@ -97,7 +98,14 @@ let sendAttachment = async(dataSend) => {
     to: dataSend.email, // list of receivers
     subject: "Kết quả đặt lịch khám bệnh", // Subject line
     text: "Hello world?", // plain text body
-        html: getBodyHTMLEmailRemedy(dataSend) // html body
+        html: getBodyHTMLEmailRemedy(dataSend),
+         attachments: [
+          {
+            filename: `Remedy-${dataSend.patientId}=${new Date().getTime()}.png`,
+            content: dataSend.imgBase64.split("base64,")[1],
+            encoding:'base64' 
+        }          
+    ]// html body
   });
 }
 module.exports = {
@@ -105,10 +113,3 @@ module.exports = {
   sendAttachment:sendAttachment
 }
 
-//  attachments: [
-//           {
-//             filename: `Remedy-${dataSend.patientId}=${new Date().getTime()}.png`,
-//             content: dataSend.imgBase64.split("base64,")[1],
-//             encoding:'base64' 
-//         }          
-//     ]

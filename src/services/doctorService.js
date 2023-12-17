@@ -410,7 +410,6 @@ let sendRemedy = (data) => {
         }
         // send email remedy
         await emailService.sendAttachment(data);
-
        resolve({
           errCode:0,
           errMessage:'OK'

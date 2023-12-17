@@ -233,11 +233,11 @@ let loginEmailPatientService = (emailPatient) => {
             as: "patientData",
             include: [
               { model: db.Allcode, as: 'timeTypeDataPatient' },
-               {model:db.Allcode,as:'statusDataPatient'}
+              { model: db.Allcode, as: 'statusDataPatient' },
             ],
-          
-          }
+          },
         ],
+       
          raw: true,
          nest: true,
       });
@@ -265,6 +265,45 @@ let loginEmailPatientService = (emailPatient) => {
     }
   });
 };
+
+
+
+let patientCancelBooking = (data) => {
+  return new Promise(async (resolve, reject) => {
+    console.log('dâtta',data)
+    try {
+      if (!data.data.email) {
+        resolve({
+          errCode: 1,
+          errMessage: 'Missing required param!'
+        })
+      } else { 
+        
+        //update patient status
+        let appointment = await db.Booking.findOne({
+          where:{
+            doctorId: data.data.doctorId,
+            patientId: data.data.patientId,
+            timeType: data.data.timeType,
+          },
+          raw:false
+        })
+        if (appointment) {
+          // console.log('email',appointment)
+          appointment.statusId = 'S4';
+          await appointment.save();
+        }
+        
+       resolve({
+          errCode:0,
+          errMessage:'Hủy lịch hẹn thành công!'
+        })
+      }
+    } catch (error) {
+      reject(error)
+    }
+  })
+}
 module.exports = {
   handleUserLogin: handleUserLogin,
   getAllUser: getAllUser,
@@ -272,5 +311,6 @@ module.exports = {
   deleteUser: deleteUser,
   updateUserData: updateUserData,
   getAllCodeService: getAllCodeService,
-  loginEmailPatientService:loginEmailPatientService
+  loginEmailPatientService: loginEmailPatientService,
+  patientCancelBooking:patientCancelBooking
 };
