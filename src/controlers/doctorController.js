@@ -115,6 +115,28 @@ let sendRemedy = async(req,res)=> {
     });
   } 
 }
+let postResult = async (req, res) => {
+  try {
+     let info = await doctorService.postResult(req.body);
+    return res.status(200).json(info);
+   } catch (error) {
+     return res.status(200).json({
+      errCode: -1,
+      message: "Error code from server ...",
+    });
+   }
+}
+let searchPatientFromDoctor = async (req, res) => {
+  try {
+    let data = await doctorService.searchPatientFromDoctor(req.body.email);
+    return res.status(200).json(data);
+  } catch (error) {
+    return res.status(200).json({
+      errCode: -1,
+      errMessage: "Error from server",
+    });
+  }
+}
 
 module.exports = {
   getTopDoctorHome: getTopDoctorHome,
@@ -126,5 +148,7 @@ module.exports = {
   getExtraDoctorById: getExtraDoctorById,
   getProflieDoctorById: getProflieDoctorById,
   getListPatientForDoctor: getListPatientForDoctor,
-  sendRemedy:sendRemedy
+  sendRemedy: sendRemedy,
+  postResult: postResult,
+  searchPatientFromDoctor: searchPatientFromDoctor,
 };

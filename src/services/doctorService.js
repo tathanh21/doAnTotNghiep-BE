@@ -345,45 +345,49 @@ let getProflieDoctorById = (doctorId) => {
 }
 
 let getListPatientForDoctor = (doctorId, date) => {
-  return new Promise(async(resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
     try {
       if (!doctorId || !date) {
         resolve({
           errCode: 1,
           errMessage: 'Missing required param!'
         })
-      } else { 
+      } else {
         let data = await db.Booking.findAll({
           where: {
-            statusId: 'S2',
+            // statusId: 'S2',
             doctorId: doctorId,
-            date:date
+            date: date
           },
           include: [
             {
-              model: db.User,as:'patientData',
+              model: db.User, as: 'patientData',
               attributes: ['email', 'firstName', 'address', 'gender'],
               include: [
-                  {model:db.Allcode,as:'genderData', attributes:['valueEn','valueVi']}
+                { model: db.Allcode, as: 'genderData', attributes: ['valueEn', 'valueVi'] }
               ]
             },
             {
-              model: db.Allcode,as:'timeTypeDataPatient',attributes:['valueEn','valueVi']
-            }
+              model: db.Allcode, as: 'timeTypeDataPatient', attributes: ['valueEn', 'valueVi']
+            },
+            { model: db.Allcode, as: 'statusDataPatient' },
           ],
-            raw: false,
-            nest:true
-        })
-       resolve({
-          errCode:0,
-          data:data
-        })
+          attributes: ['statusId', 'doctorId', 'patientId', 'date', 'timeType', 'token', 'result'], // Thêm 'result' vào attributes nếu bạn muốn lấy dữ liệu từ cột này
+          raw: false,
+          nest: true
+        });
+        resolve({
+          errCode: 0,
+          data: data
+        });
       }
     } catch (error) {
-      reject(error)
+      console.log('err',error)
+      reject(error);
     }
-  })
-}
+  });
+};
+
 
 let sendRemedy = (data) => {
   return new Promise(async(resolve, reject) => {
@@ -420,6 +424,140 @@ let sendRemedy = (data) => {
     }
   })
 }
+// let postResult = (data) => {
+//   console.log('check data',data);
+//    return new Promise(async(resolve, reject) => {
+//     try {
+//       if (!data.result ) {
+//         resolve({
+//           errCode: 1,
+//           errMessage: 'Missing required param!'
+//         })
+//       } else {
+//         //update patient status
+//         let appointment = await db.Booking.findOne({
+//           where:{
+//             doctorId: data.doctorId,
+//             patientId: data.patientId,
+//             timeType: data.timeType,
+//             statusId:'S2'
+//           },
+//           raw:false
+//         })
+//         if (appointment) {
+//           appointment.statusId = 'S3';
+//           appointment.result=data.result
+//           await appointment.save();
+//         }
+//         // send email remedy
+//         // await emailService.sendAttachment(data);
+//        resolve({
+//           errCode:0,
+//           errMessage:'OK'
+//         })
+//       }
+//     } catch (error) {
+//       reject(error)
+//     }
+//   })
+// }
+let postResult = (data) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      if (!data.data.result || !data.data.doctorId || !data.data.patientId || !data.data.timeType || !data.data.date) {
+        resolve({
+          errCode: 1,
+          errMessage: 'Missing required param!'
+        });
+      } else {
+        // Update patient status and result
+        let appointment = await db.Booking.findOne({
+          where: {
+            doctorId: data.data.doctorId,
+            patientId: data.data.patientId,
+            timeType: data.data.timeType,
+            date: data.data.date,
+            statusId: 'S2'
+          },
+          raw: false
+        });
+
+        if (appointment) {
+          // appointment.statusId = 'S3';
+          appointment.result = data.data.result;
+          await appointment.save();
+        } else {
+          resolve({
+            errCode: 2,
+            errMessage: 'Appointment not found or status is not S2'
+          });
+          return;
+        }
+
+        // Send email remedy
+        // await emailService.sendAttachment(data);
+
+        resolve({
+          errCode: 0,
+          errMessage: 'OK'
+        });
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      reject(error);
+    }
+  });
+};
+let searchPatientFromDoctor = (emailPatient) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      if (!emailPatient) {
+         resolve({
+        errCode: 3,
+        errMessage:'Vui lòng nhập email!'
+     })
+      }
+      let patient = await db.User.findAll({
+        where: { email: emailPatient, roleId: 'R3' },
+        include: [
+          {
+            model: db.Booking,
+            as: "patientData",
+            include: [
+              { model: db.Allcode, as: 'timeTypeDataPatient' },
+              { model: db.Allcode, as: 'statusDataPatient' },
+            ],
+          },
+        ],
+         raw: true,
+         nest: true,
+      });
+    
+      if (!patient) {
+          resolve({
+        errCode: 1,
+        errMessage:'Không tìm thấy email bệnh nhân, Vui lòng kiểm tra lại'
+          })
+        return;
+      }
+
+      // let doctorId= patient.patientData.doctorId
+      // let doctorName = await db.User.findOne({
+      //    where: { doctorId: doctorId }
+      // })
+
+      console.log('---',patient)
+      resolve({
+        errCode: 0,
+        patient: patient,
+        
+     })
+    } catch (error) {
+      reject(error);
+    }
+  });
+};
+
 module.exports = {
   getTopDoctorHome: getTopDoctorHome,
   getAllDoctors: getAllDoctors,
@@ -430,5 +568,7 @@ module.exports = {
   getExtraDoctorById: getExtraDoctorById,
   getProflieDoctorById: getProflieDoctorById,
   getListPatientForDoctor: getListPatientForDoctor,
-  sendRemedy:sendRemedy
+  sendRemedy: sendRemedy,
+  postResult: postResult,
+  searchPatientFromDoctor:searchPatientFromDoctor
 };

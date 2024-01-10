@@ -68,6 +68,7 @@ let getAllUser = (userId) => {
       let users = "";
       if (userId === "ALL") {
         users = await db.User.findAll({
+           where: { roleId: 'R3' },
           attributes: {
             exclude: ["password"],
           },
@@ -78,12 +79,37 @@ let getAllUser = (userId) => {
           where: { id: userId },
         });
       }
+      console.log('check user',users);
       resolve(users);
     } catch (error) {
       reject(error);
     }
   });
 };
+let getAllDoctor = (userId) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      let users = "";
+      if (userId === "ALL") {
+        users = await db.User.findAll({
+           where: { roleId: 'R2' },
+          attributes: {
+            exclude: ["password"],
+          },
+        });
+      }
+      if (userId && userId !== "ALL") {
+        users = await db.User.findOne({
+          where: { id: userId },
+        });
+      }
+      console.log('check user',users);
+      resolve(users);
+    } catch (error) {
+      reject(error);
+    }
+  });
+}
 
 let hashUserPassword = (password) => {
   return new Promise(async (resolve, reject) => {
@@ -248,7 +274,7 @@ let loginEmailPatientService = (emailPatient) => {
           })
         return;
       }
-
+console.log('check patient',patient);
       // let doctorId= patient.patientData.doctorId
       // let doctorName = await db.User.findOne({
       //    where: { doctorId: doctorId }
@@ -312,5 +338,6 @@ module.exports = {
   updateUserData: updateUserData,
   getAllCodeService: getAllCodeService,
   loginEmailPatientService: loginEmailPatientService,
-  patientCancelBooking:patientCancelBooking
+  patientCancelBooking: patientCancelBooking,
+  getAllDoctor:getAllDoctor
 };
